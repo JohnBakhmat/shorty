@@ -3,6 +3,7 @@ import gleam/dict
 import gleam/http.{Get}
 import gleam/io
 import gleam/list
+import gleam/string
 import wisp.{type Request, type Response}
 
 pub fn handle_request(req: Request) -> Response {
@@ -31,11 +32,21 @@ fn create_page(req: Request) -> Response {
 
   case link {
     Ok(l) -> {
-      io.debug(l)
+      let hashed = hash(l)
+      io.debug([l, hashed])
       wisp.ok()
+      |> wisp.string_body(hashed)
     }
     Error(_) ->
       wisp.bad_request()
       |> wisp.string_body("Got no link innit")
   }
+}
+
+fn hash(str: String) -> String {
+  str
+  |> string.lowercase
+  |> string.to_graphemes
+  |> list.shuffle
+  |> string.join("")
 }
