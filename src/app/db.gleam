@@ -1,21 +1,11 @@
 import gleam/dynamic
 import gleam/list
 import gleam/pgo
-import gleam/option.{Some}
+import gleam/result
 
 pub fn connect(connection_string cs: String) -> Result(pgo.Connection, Nil) {
-  //use config <- result.try(pgo.url_config(cs))
-
-  Ok(pgo.connect(
-    pgo.Config(
-      ..pgo.default_config(),
-      host: "127.0.0.1",
-      port: 5432,
-      database: "postgres",
-      user: "postgres",
-      password: Some("supfuckers"),
-    ),
-  ))
+  use config <- result.try(pgo.url_config(cs))
+  Ok(pgo.connect(config))
 }
 
 pub fn insert_route(db: pgo.Connection, long_url: String, short_url: String) {
