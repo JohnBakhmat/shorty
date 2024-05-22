@@ -1,12 +1,12 @@
+import app/db
 import app/web
+import envoy
 import gleam/dict
 import gleam/http.{Get}
 import gleam/list
+import gleam/result
 import gleam/string
 import wisp.{type Request, type Response}
-import envoy
-import app/db
-import gleam/result
 
 pub fn handle_request(req: Request) -> Response {
   use req <- web.middleware(req)
@@ -38,8 +38,10 @@ fn create_page(req: Request) -> Response {
     let assert Ok(db_string) =
       envoy.get("DATABASE_URL")
       |> result.replace_error("No DATABASE_URL provided")
-    
-    let assert Ok(db_conn) = db.connect(db_string) |> result.replace_error("Couldn't connect to db")
+
+    let assert Ok(db_conn) =
+      db.connect(db_string)
+      |> result.replace_error("Couldn't connect to db")
     let assert Ok(_) = db.insert_route(db_conn, long_link, short_link)
     Ok(short_link)
   }
