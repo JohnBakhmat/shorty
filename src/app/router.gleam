@@ -1,10 +1,12 @@
 import app/web
 import gleam/dict
 import gleam/http.{Get}
-import gleam/io
 import gleam/list
 import gleam/string
 import wisp.{type Request, type Response}
+import envoy
+import app/db
+import gleam/result
 
 pub fn handle_request(req: Request) -> Response {
   use req <- web.middleware(req)
@@ -25,17 +27,27 @@ fn home_page(req: Request) -> Response {
 fn create_page(req: Request) -> Response {
   use <- wisp.require_method(req, Get)
 
-  let link =
-    wisp.get_query(req)
-    |> dict.from_list
-    |> dict.get("link")
+  let result = {
+    let assert Ok(long_link) =
+      wisp.get_query(req)
+      |> dict.from_list
+      |> dict.get("link")
 
-  case link {
+    let assert Ok(short_link) = hash(long_link)
+
+    let assert Ok(db_string) =
+      envoy.get("DATABASE_URL")
+      |> result.replace_error("No DATABASE_URL provided")
+    
+    let assert Ok(db_conn) = db.connect(db_string) |> result.replace_error("Couldn't connect to db")
+    let assert Ok(_) = db.insert_route(db_conn, long_link, short_link)
+    Ok(short_link)
+  }
+
+  case result {
     Ok(l) -> {
-      let hashed = hash(l)
-      io.debug([l, hashed])
       wisp.ok()
-      |> wisp.string_body(hashed)
+      |> wisp.string_body(l)
     }
     Error(_) ->
       wisp.bad_request()
@@ -43,10 +55,11 @@ fn create_page(req: Request) -> Response {
   }
 }
 
-fn hash(str: String) -> String {
+fn hash(str: String) -> Result(String, Nil) {
   str
   |> string.lowercase
   |> string.to_graphemes
   |> list.shuffle
   |> string.join("")
+  |> Ok()
 }
