@@ -5,6 +5,7 @@ import gleam/dict
 import gleam/http.{Get}
 import gleam/int
 import gleam/list
+import gleam/pgo
 import gleam/result
 import gleam/string
 import wisp.{type Request, type Response}
@@ -38,12 +39,12 @@ fn create_page(req: Request) -> Response {
 
     use db_string <- result.try(envoy.get("DATABASE_URL"))
     use db_conn <- result.try(db.connect(db_string))
-    use _ <- result.try(
-      db.insert_route(db_conn, long_link, short_link)
-      |> result.replace_error(Nil),
-    )
-
-    Ok(short_link)
+    let db_result = db.insert_route(db_conn, long_link, short_link)
+    case db_result {
+      Ok(_) -> Ok(short_link)
+      Error(pgo.ConstraintViolated(_, _, _)) -> Ok(short_link)
+      _ -> Error(Nil)
+    }
   }
 
   case result {
