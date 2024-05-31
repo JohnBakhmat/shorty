@@ -8,6 +8,18 @@ pub fn connect(connection_string cs: String) -> Result(pgo.Connection, Nil) {
   Ok(pgo.connect(config))
 }
 
+pub fn initialize(db: pgo.Connection) {
+  let sql =
+    "
+    create table if not exists routes(
+      id serial primary key,
+      short_url text,
+      long_url text
+    )
+    "
+  pgo.execute(sql, db, [], dynamic.dynamic) |> result.replace_error(Nil)
+}
+
 pub fn insert_route(db: pgo.Connection, long_url: String, short_url: String) {
   let sql = "insert into routes (long_url,short_url) values ($1,$2)"
   pgo.execute(sql, db, [pgo.text(long_url), pgo.text(short_url)], dynamic.int)
