@@ -3,6 +3,7 @@ import app/web
 import envoy
 import gleam/dict
 import gleam/http.{Get}
+import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
@@ -59,8 +60,8 @@ fn create_page(req: Request) -> Response {
 fn hash(str: String) -> Result(String, Nil) {
   str
   |> string.lowercase
-  |> string.to_graphemes
-  |> list.shuffle
+  |> string.to_utf_codepoints()
+  |> list.map(fn(c) { string.utf_codepoint_to_int(c) |> int.to_string() })
   |> string.join("")
   |> Ok()
 }
