@@ -33,28 +33,32 @@ fn create_page(req: Request) -> Response {
     use long_link <- result.try(
       wisp.get_query(req)
       |> dict.from_list
-      |> dict.get("link"),
+      |> dict.get("link")
+      |> result.replace_error("Http query error"),
     )
-    use short_link <- result.try(hash(long_link))
+    use short_link <- result.try(
+      hash(long_link) |> result.replace_error("Hashing error"),
+    )
 
-    use db_string <- result.try(envoy.get("DATABASE_URL"))
-    use db_conn <- result.try(db.connect(db_string))
+    use db_string <- result.try(
+      envoy.get("DATABASE_URL")
+      |> result.replace_error("Can't get DATABASE_URL"),
+    )
+    use db_conn <- result.try(
+      db.connect(db_string) |> result.replace_error("Can't connect to database"),
+    )
     let db_result = db.insert_route(db_conn, long_link, short_link)
+
     case db_result {
       Ok(_) -> Ok(short_link)
       Error(pgo.ConstraintViolated(_, _, _)) -> Ok(short_link)
-      _ -> Error(Nil)
+      _ -> Error("Unexpected insertion error")
     }
   }
 
   case result {
-    Ok(l) -> {
-      wisp.ok()
-      |> wisp.string_body(l)
-    }
-    Error(_) ->
-      wisp.bad_request()
-      |> wisp.string_body("Got no link innit")
+    Ok(short_link) -> wisp.ok() |> wisp.string_body(short_link)
+    Error(error) -> wisp.bad_request() |> wisp.string_body(error)
   }
 }
 
