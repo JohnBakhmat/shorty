@@ -28,21 +28,20 @@ fn create_page(req: Request) -> Response {
   use <- wisp.require_method(req, Get)
 
   let result = {
-    let assert Ok(long_link) =
+    use long_link <- result.try(
       wisp.get_query(req)
       |> dict.from_list
-      |> dict.get("link")
+      |> dict.get("link"),
+    )
+    use short_link <- result.try(hash(long_link))
 
-    let assert Ok(short_link) = hash(long_link)
+    use db_string <- result.try(envoy.get("DATABASE_URL"))
+    use db_conn <- result.try(db.connect(db_string))
+    use _ <- result.try(
+      db.insert_route(db_conn, long_link, short_link)
+      |> result.replace_error(Nil),
+    )
 
-    let assert Ok(db_string) =
-      envoy.get("DATABASE_URL")
-      |> result.replace_error("No DATABASE_URL provided")
-
-    let assert Ok(db_conn) =
-      db.connect(db_string)
-      |> result.replace_error("Couldn't connect to db")
-    let assert Ok(_) = db.insert_route(db_conn, long_link, short_link)
     Ok(short_link)
   }
 
