@@ -13,8 +13,8 @@ pub fn initialize(db: pgo.Connection) {
     "
     create table if not exists routes(
       id serial primary key,
-      short_url text,
-      long_url text
+      short_url text not null unique,
+      long_url text not null unique
     )
     "
   pgo.execute(sql, db, [], dynamic.dynamic) |> result.replace_error(Nil)
