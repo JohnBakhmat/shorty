@@ -1,6 +1,5 @@
 import app/db
 import app/web
-import envoy
 import gleam/dict
 import gleam/http.{Get}
 import gleam/int
@@ -10,25 +9,28 @@ import gleam/result
 import gleam/string
 import wisp.{type Request, type Response}
 
-pub fn handle_request(req: Request) -> Response {
+pub type Context {
+  Context(database_url: String)
+}
+
+pub fn handle_request(req: Request, ctx: Context) -> Response {
   use req <- web.middleware(req)
 
   case wisp.path_segments(req) {
-    [] -> home_page(req)
-    ["new"] -> create_page(req)
+    [] -> home_page(req, ctx)
+    ["new"] -> create_page(req, ctx)
     _ -> wisp.not_found()
   }
 }
 
-fn home_page(req: Request) -> Response {
+fn home_page(req: Request, _ctx: Context) -> Response {
   use <- wisp.require_method(req, Get)
   wisp.ok()
   |> wisp.string_body("OK")
 }
 
-fn create_page(req: Request) -> Response {
+fn create_page(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Get)
-
   let result = {
     use long_link <- result.try(
       wisp.get_query(req)
@@ -40,12 +42,9 @@ fn create_page(req: Request) -> Response {
       hash(long_link) |> result.replace_error("Hashing error"),
     )
 
-    use db_string <- result.try(
-      envoy.get("DATABASE_URL")
-      |> result.replace_error("Can't get DATABASE_URL"),
-    )
     use db_conn <- result.try(
-      db.connect(db_string) |> result.replace_error("Can't connect to database"),
+      db.connect(ctx.database_url)
+      |> result.replace_error("Can't connect to database"),
     )
     let db_result = db.insert_route(db_conn, long_link, short_link)
 
