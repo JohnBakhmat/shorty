@@ -22,7 +22,7 @@ pub fn initialize(db: pgo.Connection) {
 
 pub fn insert_route(db: pgo.Connection, long_url: String, short_url: String) {
   let sql = "insert into routes (long_url,short_url) values ($1,$2)"
-  pgo.execute(sql, db, [pgo.text(long_url), pgo.text(short_url)], dynamic.int)
+  pgo.execute(sql, db, [pgo.text(long_url), pgo.text(short_url)], dynamic.dynamic)
 }
 
 pub fn find_route_by_short(db: pgo.Connection, short_url url: String) {
