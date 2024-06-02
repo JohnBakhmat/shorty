@@ -1,9 +1,9 @@
 import app/migrate
 import app/router
+import envoy
 import gleam/erlang/process
 import mist
 import wisp
-import envoy
 
 pub fn main() {
   wisp.configure_logger()

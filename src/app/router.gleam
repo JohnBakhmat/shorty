@@ -1,10 +1,9 @@
-import app/db
+import app/db as database
 import app/web
 import gleam/dict
 import gleam/http.{Get}
 import gleam/int
 import gleam/list
-import gleam/pgo
 import gleam/result
 import gleam/string
 import wisp.{type Request, type Response}
@@ -19,7 +18,24 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
   case wisp.path_segments(req) {
     [] -> home_page(req, ctx)
     ["new"] -> create_page(req, ctx)
+    [short_link] -> redirect_page(req, ctx, short_link)
     _ -> wisp.not_found()
+  }
+}
+
+fn redirect_page(req: Request, ctx: Context, short_link: String) -> Response {
+  use <- wisp.require_method(req, Get)
+
+  let result = {
+    use db <- result.try(database.connect(ctx.database_url))
+    use route <- result.try(database.find_route_by_short(db, short_link))
+    Ok(route)
+  }
+
+  case result {
+    Ok(link) -> wisp.moved_permanently(link)
+    Error(database.SelectionError) -> wisp.not_found()
+    _ -> wisp.bad_request()
   }
 }
 
@@ -34,25 +50,17 @@ fn create_page(req: Request, ctx: Context) -> Response {
   let result = {
     use long_link <- result.try(
       wisp.get_query(req)
-      |> dict.from_list
+      |> dict.from_list()
       |> dict.get("link")
       |> result.replace_error("Http query error"),
     )
-    use short_link <- result.try(
-      hash(long_link) |> result.replace_error("Hashing error"),
-    )
-
+    use short_link <- result.try(hash(long_link))
     use db_conn <- result.try(
-      db.connect(ctx.database_url)
-      |> result.replace_error("Can't connect to database"),
+      database.connect(ctx.database_url)
+      |> result.replace_error("Db connection error"),
     )
-    let db_result = db.insert_route(db_conn, long_link, short_link)
-
-    case db_result {
-      Ok(_) -> Ok(short_link)
-      Error(pgo.ConstraintViolated(_, _, _)) -> Ok(short_link)
-      _ -> Error("Unexpected insertion error")
-    }
+    database.insert_route(db_conn, long_link, short_link)
+    |> result.replace_error("Insertion error")
   }
 
   case result {
@@ -61,7 +69,7 @@ fn create_page(req: Request, ctx: Context) -> Response {
   }
 }
 
-fn hash(str: String) -> Result(String, Nil) {
+fn hash(str: String) -> Result(String, String) {
   str
   |> string.lowercase
   |> string.to_utf_codepoints()
