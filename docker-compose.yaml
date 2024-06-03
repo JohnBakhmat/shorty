@@ -1,0 +1,21 @@
+services:
+  database:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+    expose:
+      - 5432
+    volumes:
+      - db:/var/lib/postgres
+  app:
+    build:
+      context: .
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@database:5432/postgres
+    ports:
+      - "8000"
+    depends_on:
+      - database
+volumes:
+  db:
