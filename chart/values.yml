@@ -1,5 +1,5 @@
 image:
-  repository: ghcr.io/johnbakhmat/johnbakhmat-tech
+  repository: ghcr.io/johnbakhmat/shorty
   pullPolicy: Always
   tag: "main"
 
@@ -7,7 +7,7 @@ replicas: 3
 
 service:
   app_port: 80
-  host: johnbakhmat.tech
+  host: shorty.johnbakhmat.tech
   ssl:
     enabled: true
     port: 443
@@ -25,4 +25,4 @@ resources:
 
 # populated by the ArgoCD application
 devhosting:
-  appname: ''
+  appname: ""
