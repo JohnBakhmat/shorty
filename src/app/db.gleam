@@ -28,7 +28,7 @@ pub fn initialize(db: pgo.Connection) {
       long_url text not null unique
     )
     "
-  pgo.execute(sql, db, [], dynamic.dynamic) |> result.replace_error(Nil)
+  pgo.execute(sql, db, [], dynamic.dynamic)
 }
 
 pub fn insert_route(db: pgo.Connection, long_url: String, short_url: String) {
