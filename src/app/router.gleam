@@ -1,11 +1,9 @@
 import app/db as database
+import app/util
 import app/web
 import gleam/dict
 import gleam/http.{Get}
-import gleam/int
-import gleam/list
 import gleam/result
-import gleam/string
 import wisp.{type Request, type Response}
 
 pub type Context {
@@ -54,7 +52,7 @@ fn create_page(req: Request, ctx: Context) -> Response {
       |> dict.get("link")
       |> result.replace_error("Http query error"),
     )
-    use short_link <- result.try(hash(long_link))
+    use short_link <- result.try(util.hash(long_link))
     use db_conn <- result.try(
       database.connect(ctx.database_url)
       |> result.replace_error("Db connection error"),
@@ -67,13 +65,4 @@ fn create_page(req: Request, ctx: Context) -> Response {
     Ok(short_link) -> wisp.ok() |> wisp.string_body(short_link)
     Error(error) -> wisp.bad_request() |> wisp.string_body(error)
   }
-}
-
-fn hash(str: String) -> Result(String, String) {
-  str
-  |> string.lowercase
-  |> string.to_utf_codepoints()
-  |> list.map(fn(c) { string.utf_codepoint_to_int(c) |> int.to_string() })
-  |> string.join("")
-  |> Ok()
 }
