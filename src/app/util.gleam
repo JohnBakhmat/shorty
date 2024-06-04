@@ -6,7 +6,7 @@ import gleam/string
 const words = [
   "sus", "slay", "cheugy", "bussin'", "nocap", "bet", "sheesh", "slaps", "cap",
   "cringe", "yolo", "snatched", "periodt", "oof", "sksksk", "stan", "sksksks",
-  "wig", "slayin'", "deadass", "skibidi", "bop", "fanum tax", "gyat",
+  "wig", "slayin'", "deadass", "skibidi", "bop", "fanum-tax", "gyat",
 ]
 
 fn get_word() {
@@ -15,7 +15,7 @@ fn get_word() {
 }
 
 pub fn hash(_str: String) -> Result(String, String) {
-  ["", "", ""] |> list.map(fn(_) { get_word() }) |> string.join("-") |> Ok()
+  ["", "", ""] |> list.map(fn(_) { get_word()|> string.replace(" ","-") }) |> string.join("-") |> Ok()
   //str
   //|> string.lowercase
   //|> string.to_utf_codepoints()
