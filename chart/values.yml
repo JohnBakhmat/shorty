@@ -26,3 +26,5 @@ resources:
 # populated by the ArgoCD application
 devhosting:
   appname: ""
+  secrets:
+    databaseUrl: ""
