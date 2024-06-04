@@ -1,29 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: { { include "app.fullname" . } }
-  labels: { { - include "app.labels" . | nindent 4 } }
+  name: {{ include "app.fullname" . }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
 spec:
-  replicas: { { .Values.replicas } }
+  replicas: {{ .Values.replicas }}
   selector:
-    matchLabels: { { - include "app.selectorLabels" . | nindent 6 } }
+    matchLabels:
+      {{- include "app.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      labels: { { - include "app.selectorLabels" . | nindent 8 } }
+      labels:
+        {{- include "app.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: { { .Chart.Name } }
+        - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: { { .Values.image.pullPolicy } }
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: DATABASE_URL
+            - name: GITHUB_URL
               valueFrom:
                 secretKeyRef:
                   key: databaseUrl
                   name: shorty-johnbakhmat-tech-secrets
           ports:
             - name: http
-              containerPort: { { .Values.service.app_port } }
+              containerPort: {{ .Values.service.app_port }}
               protocol: TCP
           startupProbe:
             initialDelaySeconds: 20
@@ -38,4 +41,5 @@ spec:
             httpGet:
               path: /
               port: http
-          resources: { { - toYaml .Values.resources | nindent 12 } }
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
