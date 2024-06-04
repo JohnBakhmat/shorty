@@ -12,7 +12,7 @@ pub fn main() {
   let secret_key_base = wisp.random_string(64)
 
   let assert Ok(db_string) = envoy.get("DATABASE_URL")
-  let port = envoy.get("PORT") |> result.then(int.parse) |> result.unwrap(9876)
+  let port = envoy.get("PORT") |> result.then(int.parse) |> result.unwrap(80)
   let assert Ok(_) = migrate.migrate(db_string)
   let context = router.Context(db_string)
 
